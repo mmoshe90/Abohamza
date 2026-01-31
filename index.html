@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>بقالية أبو حمزة</title>
+
+<style>
+:root{
+ --green:#2e7d32;
+ --gray:#555;
+}
+body{
+ margin:0;
+ font-family:Tahoma, Arial;
+ background:#f2f2f2;
+}
+header{
+ background:var(--green);
+ color:#fff;
+ padding:12px;
+ text-align:center;
+ font-size:18px;
+ position:sticky;
+ top:0;
+ z-index:10;
+}
+.products{
+ padding:8px;
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+ gap:8px;
+}
+.card{
+ background:#fff;
+ padding:6px;
+ border-radius:10px;
+ text-align:center;
+ box-shadow:0 0 5px rgba(0,0,0,.15);
+ font-size:12px;
+}
+.card img{
+ width:100%;
+ height:80px;
+ object-fit:cover;
+ border-radius:8px;
+}
+.card h4{
+ margin:4px 0 2px;
+ font-size:13px;
+}
+.card p{
+ margin:0;
+ font-size:11px;
+ color:var(--gray);
+}
+.qty{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:6px;
+ margin-top:4px;
+}
+.qty button{
+ width:26px;
+ height:26px;
+ border:none;
+ background:var(--green);
+ color:#fff;
+ border-radius:50%;
+ font-size:16px;
+ cursor:pointer;
+}
+.qty span{
+ min-width:30px;
+ font-weight:bold;
+}
+.card button{
+ width:100%;
+ margin-top:4px;
+ padding:6px;
+ background:var(--green);
+ color:#fff;
+ border:none;
+ border-radius:6px;
+ font-size:12px;
+ cursor:pointer;
+}
+.form{
+ background:#fff;
+ padding:8px;
+ margin:8px;
+ border-radius:10px;
+}
+.form input,.form select{
+ width:100%;
+ padding:6px;
+ margin-top:4px;
+ font-size:14px;
+}
+.cart{
+ position:fixed;
+ bottom:0;
+ left:0;
+ right:0;
+ background:#fff;
+ padding:8px;
+ border-top:2px solid var(--green);
+}
+.cart-items{
+ max-height:130px;
+ overflow:auto;
+ font-size:13px;
+}
+.cart-item{
+ display:flex;
+ justify-content:space-between;
+ margin-bottom:4px;
+}
+.remove{
+ color:red;
+ cursor:pointer;
+ margin-right:6px;
+}
+.total{
+ font-weight:bold;
+ color:#c62828;
+ margin-top:4px;
+}
+.whatsapp{
+ width:100%;
+ margin-top:6px;
+ padding:12px;
+ background:#25D366;
+ color:#fff;
+ border:none;
+ border-radius:8px;
+ font-size:16px;
+ cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>🧺 بقالية أبو حمزة</header>
+
+<div class="products" id="products"></div>
+
+<div class="form">
+<input id="name" placeholder="اسم الزبون">
+<input id="phone" placeholder="رقم الهاتف">
+<select id="time">
+<option value="الآن">الآن</option>
+<option value="بعد ساعة">بعد ساعة</option>
+<option value="مساءً">مساءً</option>
+</select>
+</div>
+
+<div class="cart">
+<div class="cart-items" id="items"></div>
+<div class="total" id="total">المجموع: 0 دينار</div>
+<button class="whatsapp" onclick="send()">📲 إرسال الطلب عبر واتساب</button>
+</div>
+
+<script>
+const delivery = 1000;
+const phoneTrader = "9647700957240";
+
+const products = [
+ ["طماطة",1000,"tomato vegetable"],
+ ["خيار",750,"cucumber vegetable"],
+ ["بطاطا",700,"potato vegetable"],
+ ["بصل",500,"onion vegetable"],
+ ["باذنجان",800,"eggplant vegetable"],
+ ["تفاح",1500,"apple fruit"],
+ ["موز",2000,"banana fruit"],
+ ["برتقال",1000,"orange fruit"],
+ ["رمان",1800,"pomegranate fruit"],
+ ["عنب",2500,"grapes fruit"]
+];
+
+let cart = [];
+let weights = [];
+
+const box = document.getElementById("products");
+
+products.forEach((p,i)=>{
+ weights[i] = 1;
+ box.innerHTML += `
+ <div class="card">
+  <img src="https://source.unsplash.com/300x300/?${encodeURIComponent(p[2])}">
+  <h4>${p[0]}</h4>
+  <p>${p[1]} دينار / كغم</p>
+  <div class="qty">
+   <button onclick="changeWeight(${i},-0.5)">−</button>
+   <span id="w${i}">1</span>
+   <button onclick="changeWeight(${i},0.5)">+</button>
+  </div>
+  <button onclick="addToCart(${i})">إضافة</button>
+ </div>`;
+});
+
+function changeWeight(i,v){
+ weights[i] = Math.max(0.5, weights[i] + v);
+ document.getElementById("w"+i).innerText = weights[i];
+}
+
+function addToCart(i){
+ cart.push({
+  name: products[i][0],
+  price: products[i][1],
+  weight: weights[i]
+ });
+ updateCart();
+}
+
+function updateCart(){
+ let items = document.getElementById("items");
+ items.innerHTML = "";
+ let subtotal = 0;
+
+ cart.forEach((c,i)=>{
+  let cost = c.price * c.weight;
+  subtotal += cost;
+  items.innerHTML += `
+   <div class="cart-item">
+    <span>${c.name} ${c.weight}كغم</span>
+    <span>${cost}
+     <span class="remove" onclick="removeItem(${i})">❌</span>
+    </span>
+   </div>`;
+ });
+
+ document.getElementById("total").innerText =
+  "المجموع: " + (subtotal + delivery) + " دينار (توصيل " + delivery + ")";
+}
+
+function removeItem(i){
+ cart.splice(i,1);
+ updateCart();
+}
+
+function send(){
+ if(cart.length === 0){
+  alert("السلة فارغة");
+  return;
+ }
+ if(!name.value || !phone.value){
+  alert("يرجى إدخال الاسم ورقم الهاتف");
+  return;
+ }
+
+ let msg = `طلب جديد 🧾
+بقالية أبو حمزة
+------------------
+الاسم: ${name.value}
+الهاتف: ${phone.value}
+وقت التوصيل: ${time.value}
+------------------
+`;
+
+ let subtotal = 0;
+ cart.forEach((c,i)=>{
+  let cost = c.price * c.weight;
+  subtotal += cost;
+  msg += `${i+1}- ${c.name} ${c.weight}كغم = ${cost} دينار\n`;
+ });
+
+ msg += `------------------
+أجرة التوصيل: ${delivery} دينار
+المجموع الكلي: ${subtotal + delivery} دينار
+------------------`;
+
+ window.location.href =
+  "https://wa.me/" + phoneTrader + "?text=" + encodeURIComponent(msg);
+}
+</script>
+
+</body>
+</html>
