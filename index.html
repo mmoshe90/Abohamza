@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>طلب خضروات</title>
+
+<style>
+body{
+ margin:0;
+ font-family:Tahoma, Arial;
+ background:#f2fdf9;
+}
+header{
+ background:#0f766e;
+ color:#fff;
+ padding:12px;
+ text-align:center;
+}
+header img{
+ width:100%;
+ max-height:160px;
+ object-fit:cover;
+ border-radius:12px;
+}
+.search{
+ padding:10px;
+}
+.search input{
+ width:100%;
+ padding:10px;
+ font-size:16px;
+ border-radius:10px;
+ border:1px solid #ccc;
+}
+.products{
+ padding:10px;
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+ gap:12px;
+}
+.card{
+ background:#fff;
+ border-radius:14px;
+ padding:10px;
+ text-align:center;
+ box-shadow:0 4px 10px rgba(0,0,0,.1);
+}
+.card img{
+ width:100%;
+ height:100px;
+ object-fit:cover;
+ border-radius:10px;
+}
+.card h4{margin:6px 0 2px}
+.card p{margin:0;color:#444}
+.qty{
+ display:flex;
+ justify-content:center;
+ gap:10px;
+ margin:6px 0;
+}
+.qty button{
+ width:30px;height:30px;
+ border:none;border-radius:50%;
+ background:#0f766e;color:#fff;font-size:18px;
+}
+.card button{
+ width:100%;
+ padding:8px;
+ border:none;
+ border-radius:10px;
+ background:#0f766e;
+ color:#fff;
+}
+.cart{
+ position:fixed;
+ bottom:0;left:0;right:0;
+ background:#fff;
+ padding:10px;
+ border-top:2px solid #0f766e;
+}
+.total{color:red;font-weight:bold}
+.whatsapp{
+ width:100%;
+ padding:14px;
+ margin-top:6px;
+ background:#25D366;
+ border:none;
+ border-radius:14px;
+ font-size:18px;
+ color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <img src="https://raw.githubusercontent.com/mmoshe90/Abohamza/main/banner.jpg">
+</header>
+
+<div class="search">
+ <input type="text" id="search" placeholder="🔍 ابحث عن منتج..." onkeyup="filterProducts()">
+</div>
+
+<div class="products" id="products"></div>
+
+<div class="cart">
+ <div class="total" id="total">
+  المجموع: 0 دينار<br>
+  سعر التوصيل: 1000 دينار
+ </div>
+ <button class="whatsapp" onclick="send()">📲 إرسال الطلب عبر واتساب</button>
+</div>
+
+<script>
+const phoneTrader="9647700957240";
+const delivery=1000;
+const base="https://raw.githubusercontent.com/mmoshe90/Abohamza/main/";
+
+const products=[
+ {name:"طماطه",price:1000,img:"tomato.jpg"},
+ {name:"خيار",price:1000,img:"cucumber.jpg"},
+ {name:"بصل",price:750,img:"onion.jpg"},
+ {name:"بطاطا",price:750,img:"potato.jpg"},
+ {name:"بيذنجان",price:1250,img:"eggplant.jpg"},
+ {name:"باقلاء",price:2000,img:"beans.jpg"},
+ {name:"قرنابيط",price:1000,img:"cauliflower.jpg"},
+ {name:"فجل",price:500,img:"radish.jpg"},
+ {name:"ثوم",price:1000,img:"garlic.jpg"},
+ {name:"شجر",price:1000,img:"herbs.jpg"},
+ {name:"فلفل",price:1000,img:"pepper.jpg"},
+ {name:"برتقال",price:500,img:"orange.jpg"},
+ {name:"خس",price:750,img:"lettuce.jpg"},
+ {name:"تفاح",price:1250,img:"apple.jpg"},
+ {name:"رمان",price:2000,img:"pomegranate.jpg"},
+ {name:"لالنگي",price:1250,img:"pear.jpg"},   // ✔️ صح
+ {name:"جزر",price:750,img:"carrots.jpg"},
+ {name:"موز",price:1500,img:"banana.jpg"},
+ {name:"فطر",price:3500,img:"mushroom.jpg"},
+ {name:"فرولة",price:3500,img:"strawberry.jpg"},
+ {name:"عنب",price:2000,img:"grapes.jpg"}
+];
+
+let cart=[],weights=[];
+const box=document.getElementById("products");
+
+function draw(list){
+ box.innerHTML="";
+ list.forEach((p,i)=>{
+  weights[i]=1;
+  box.innerHTML+=`
+  <div class="card">
+   <img src="${base+p.img}" onerror="this.src='${base}apple.jpg'">
+   <h4>${p.name}</h4>
+   <p>${p.price} دينار / كغم</p>
+   <div class="qty">
+    <button onclick="chg(${i},-0.5)">−</button>
+    <b id="w${i}">1</b>
+    <button onclick="chg(${i},0.5)">+</button>
+   </div>
+   <button onclick="add(${i})">إضافة</button>
+  </div>`;
+ });
+}
+
+draw(products);
+
+function chg(i,v){
+ weights[i]=Math.max(0.5,weights[i]+v);
+ document.getElementById("w"+i).innerText=weights[i];
+}
+function add(i){
+ cart.push({...products[i],w:weights[i]});
+ upd();
+}
+function upd(){
+ let sum=0;
+ cart.forEach(c=>sum+=c.price*c.w);
+ document.getElementById("total").innerHTML=
+ `المجموع: ${sum+delivery} دينار<br>سعر التوصيل: ${delivery} دينار`;
+}
+function send(){
+ if(!cart.length){alert("السلة فارغة");return;}
+ let msg="🧾 طلب جديد\n----------------\n";
+ cart.forEach(c=>msg+=`${c.name} ${c.w}كغم = ${c.price*c.w} دينار\n`);
+ msg+=`----------------\nسعر التوصيل: ${delivery}\nالمجموع: ${cart.reduce((s,c)=>s+c.price*c.w,0)+delivery}`;
+ location.href="https://wa.me/"+phoneTrader+"?text="+encodeURIComponent(msg);
+}
+function filterProducts(){
+ let q=document.getElementById("search").value;
+ draw(products.filter(p=>p.name.includes(q)));
+}
+</script>
+
+</body>
+</html>
