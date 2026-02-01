@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بقالية</title>
+
+<style>
+body{
+ margin:0;
+ font-family:Tahoma, Arial;
+ background:#f2fdf9;
+ padding-bottom:200px;
+}
+header{
+ background:#0f766e;
+ color:#fff;
+ padding:14px;
+ text-align:center;
+ font-size:20px;
+ font-weight:bold;
+}
+.banner{
+ padding:10px;
+}
+.banner img{
+ width:100%;
+ border-radius:16px;
+}
+.search-box{
+ padding:10px;
+}
+.search-box input{
+ width:100%;
+ padding:10px;
+ font-size:16px;
+ border-radius:10px;
+ border:1px solid #ccc;
+}
+.products{
+ padding:10px;
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+ gap:12px;
+}
+.card{
+ background:#fff;
+ border-radius:14px;
+ padding:10px;
+ text-align:center;
+ box-shadow:0 4px 10px rgba(0,0,0,.1);
+}
+.card img{
+ width:100%;
+ height:110px;
+ object-fit:cover;
+ border-radius:10px;
+}
+.qty{
+ display:flex;
+ justify-content:center;
+ gap:10px;
+ margin:6px 0;
+}
+.qty button{
+ width:30px;height:30px;
+ border:none;border-radius:50%;
+ background:#0f766e;color:#fff;font-size:18px;
+}
+.card button{
+ width:100%;
+ padding:8px;
+ border:none;
+ border-radius:10px;
+ background:#0f766e;
+ color:#fff;
+}
+.cart{
+ position:fixed;
+ bottom:0;left:0;right:0;
+ background:#fff;
+ padding:10px;
+ border-top:2px solid #0f766e;
+}
+.cart-item{
+ display:flex;
+ justify-content:space-between;
+ font-size:14px;
+ margin-bottom:4px;
+}
+.remove{
+ color:red;
+ cursor:pointer;
+}
+.total{
+ color:red;
+ font-weight:bold;
+ margin-top:6px;
+}
+.whatsapp{
+ width:100%;
+ padding:14px;
+ margin-top:6px;
+ background:#25D366;
+ border:none;
+ border-radius:14px;
+ font-size:18px;
+ color:#fff;
+}
+footer{
+ margin-top:20px;
+ padding:10px;
+ text-align:center;
+}
+footer img{
+ width:100%;
+ border-radius:16px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- صورة أبو حمزة -->
+<div class="banner">
+ <img src="banner.jpg" alt="أبو حمزة">
+</div>
+
+<header>🧺 تسوق الخضروات والفواكه</header>
+
+<div class="search-box">
+ <input type="text" id="search" placeholder="🔍 ابحث عن منتج">
+</div>
+
+<div class="products" id="products"></div>
+
+<div class="cart">
+ <div id="cartItems"></div>
+ <div class="total" id="total">المجموع: 0 دينار</div>
+ <button class="whatsapp" onclick="send()">📲 إرسال الطلب عبر واتساب</button>
+</div>
+
+<footer>
+ <img src="banner.jpg" alt="أبو حمزة">
+</footer>
+
+<script>
+const phoneTrader="9647700957240";
+const delivery=1000;
+
+let products=[], cart=[], weights=[];
+const box=document.getElementById("products");
+
+/* 🔗 Google Sheet */
+fetch("https://opensheet.elk.sh/1VDPFkYkKQUfPNtU7xneBxUyYObotJtip5FdK42KCqzE/Sheet1")
+.then(r=>r.json())
+.then(d=>{
+ products=d;
+ render();
+});
+
+function render(){
+ box.innerHTML="";
+ products
+ .filter(p=>p.name.includes(search.value))
+ .forEach((p,i)=>{
+  weights[i]=1;
+  box.innerHTML+=`
+  <div class="card">
+   <img src="images/${p.img}.jpg" onerror="this.src='images/placeholder.jpg'">
+   <h4>${p.name}</h4>
+   <p>${p.price} دينار / كغم</p>
+   <div class="qty">
+    <button onclick="chg(${i},-0.5)">−</button>
+    <b id="w${i}">1</b>
+    <button onclick="chg(${i},0.5)">+</button>
+   </div>
+   <button onclick="add(${i})">إضافة</button>
+  </div>`;
+ });
+}
+
+search.oninput=render;
+
+function chg(i,v){
+ weights[i]=Math.max(0.5,weights[i]+v);
+ document.getElementById("w"+i).innerText=weights[i];
+}
+
+function add(i){
+ cart.push({
+  name:products[i].name,
+  price:+products[i].price,
+  w:weights[i]
+ });
+ updateCart();
+}
+
+function updateCart(){
+ let sum=0;
+ cartItems.innerHTML="";
+ cart.forEach((c,i)=>{
+  let cost=c.price*c.w;
+  sum+=cost;
+  cartItems.innerHTML+=`
+  <div class="cart-item">
+   <span>${i+1}- ${c.name} ${c.w}كغم</span>
+   <span>${cost} <span class="remove" onclick="del(${i})">❌</span></span>
+  </div>`;
+ });
+ total.innerText=
+  `المجموع: ${sum} دينار | التوصيل: ${delivery} | الكلي: ${sum+delivery}`;
+}
+
+function del(i){
+ cart.splice(i,1);
+ updateCart();
+}
+
+function send(){
+ if(!cart.length){alert("السلة فارغة");return;}
+ let msg="🧾 فاتورة الطلب\n";
+ let sum=0;
+ cart.forEach((c,i)=>{
+  let cost=c.price*c.w;
+  sum+=cost;
+  msg+=`${i+1}) ${c.name} ${c.w}كغم = ${cost} دينار\n`;
+ });
+ msg+=`------------------\nالتوصيل: ${delivery}\nالمجموع الكلي: ${sum+delivery}`;
+ location.href="https://wa.me/"+phoneTrader+"?text="+encodeURIComponent(msg);
+}
+</script>
+
+</body>
+</html>
